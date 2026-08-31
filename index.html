@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MISSION 부동산 CRM 대시보드</title>
+<meta name="description" content="units·customers·contracts·consultations·ad_spend 데이터를 기반으로 한 영업 퍼널 및 인사이트 대시보드" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<div class="bg-grid" aria-hidden="true"></div>
+
+<header class="site-header">
+  <div class="wrap header-inner">
+    <div class="brand">
+      <span class="brand-mark">MISSION</span>
+      <span class="brand-sub">부동산 CRM 인사이트</span>
+    </div>
+    <div class="header-meta">
+      <span id="last-updated" class="pill">데이터 불러오는 중…</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="hero">
+    <h1>매물 · 상담 · 계약 · 광고 데이터를 한 화면에서</h1>
+    <p class="hero-sub">Track 2 Mission — units / customers / contracts / consultations / ad_spend 5개 원본을 정제·조인하여 Supabase에 적재하고, 실시간으로 조회한 결과입니다.</p>
+  </section>
+
+  <section class="kpi-row" id="kpi-row" aria-label="핵심 지표">
+    <div class="kpi-card">
+      <span class="kpi-label">전체 매물</span>
+      <span class="kpi-value" id="kpi-units">–</span>
+      <span class="kpi-unit">세대</span>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-label">누적 상담</span>
+      <span class="kpi-value" id="kpi-consults">–</span>
+      <span class="kpi-unit">건</span>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-label">완료 계약</span>
+      <span class="kpi-value" id="kpi-contracts">–</span>
+      <span class="kpi-unit">건</span>
+    </div>
+    <div class="kpi-card accent">
+      <span class="kpi-label">상담 → 계약희망 전환율</span>
+      <span class="kpi-value" id="kpi-conv">–</span>
+      <span class="kpi-unit">%</span>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-label">누적 광고비</span>
+      <span class="kpi-value" id="kpi-adspend">–</span>
+      <span class="kpi-unit">만원</span>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-label">평균 리드당 비용(CPL)</span>
+      <span class="kpi-value" id="kpi-cpl">–</span>
+      <span class="kpi-unit">만원</span>
+    </div>
+  </section>
+
+  <section class="charts-grid">
+
+    <article class="chart-card span-2">
+      <header class="chart-head">
+        <h2>채널별 상담 퍼널</h2>
+        <p>상담 건수 대비 계약희망 전환율 — 채널마다 규모와 효율이 다릅니다</p>
+      </header>
+      <div class="chart-body chart-tall">
+        <canvas id="chart-channel"></canvas>
+      </div>
+    </article>
+
+    <article class="chart-card">
+      <header class="chart-head">
+        <h2>매물상태 정합성</h2>
+        <p>units.status와 실제 계약 이력의 일치 여부</p>
+      </header>
+      <div class="chart-body">
+        <canvas id="chart-consistency"></canvas>
+      </div>
+    </article>
+
+    <article class="chart-card span-2">
+      <header class="chart-head">
+        <h2>월별 리드 추이</h2>
+        <p>2024.01 – 2025.12, 월별 확보 리드 수</p>
+      </header>
+      <div class="chart-body">
+        <canvas id="chart-leads"></canvas>
+      </div>
+    </article>
+
+    <article class="chart-card">
+      <header class="chart-head">
+        <h2>월별 리드당 비용(CPL)</h2>
+        <p>낮을수록 효율적인 집행</p>
+      </header>
+      <div class="chart-body">
+        <canvas id="chart-cpl"></canvas>
+      </div>
+    </article>
+
+    <article class="chart-card">
+      <header class="chart-head">
+        <h2>평형별 판매율</h2>
+        <p>타입별 전체 세대 대비 계약완료 비중</p>
+      </header>
+      <div class="chart-body">
+        <canvas id="chart-unittype"></canvas>
+      </div>
+    </article>
+
+    <article class="chart-card">
+      <header class="chart-head">
+        <h2>리드 소스별 전환율</h2>
+        <p>유입 경로가 실제 계약으로 이어지는 비율</p>
+      </header>
+      <div class="chart-body">
+        <canvas id="chart-leadsource"></canvas>
+      </div>
+    </article>
+
+  </section>
+
+  <section class="insights" aria-label="인사이트">
+    <div class="section-head">
+      <h2>인사이트 5</h2>
+      <p>각 인사이트는 <b>발견 → 근거 데이터 → 제안 액션</b> 3단 구조로 정리했습니다. 수치는 실시간 조회 결과입니다.</p>
+    </div>
+
+    <div class="insight-grid" id="insight-grid">
+      <!-- 카드는 js/app.js에서 채워집니다 -->
+    </div>
+  </section>
+
+  <section class="caveats">
+    <div class="section-head">
+      <h2>데이터 품질 참고사항</h2>
+      <p>원본 데이터의 결측·중복·이상치는 임의로 삭제하지 않고 플래그 컬럼으로 보존했습니다.</p>
+    </div>
+    <ul class="caveat-list">
+      <li><b>고객 중복</b> — 원본 623건 중 중복 레코드를 정리해 <b>600건</b>으로 적재했습니다.</li>
+      <li><b>상담 고아 참조</b> — 상담 2,500건 중 <b>154건</b>은 customer_id 또는 unit_id가 더미 값이라 해당 FK를 NULL 처리하고, 원본 값은 <code>*_original</code> 컬럼에 그대로 보존했습니다.</li>
+      <li><b>이상치 플래그</b> — 미래 날짜·비정상 상담시간 등은 삭제 대신 <code>is_outlier</code> / <code>outlier_type</code> 컬럼으로 표시했습니다.</li>
+      <li><b>매물 상태 불일치</b> — 아래 인사이트 ①에서 다루는 것처럼 <code>status_consistency</code>로 정합성 여부를 그대로 노출했습니다.</li>
+    </ul>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <span>MJU_AID30+ · Track 2 Mission</span>
+    <span class="sep">·</span>
+    <span>Supabase 실시간 연동 · 정적 대시보드</span>
+  </div>
+</footer>
+
+<script src="js/app.js"></script>
+</body>
+</html>
